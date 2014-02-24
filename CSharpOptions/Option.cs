@@ -1,74 +1,39 @@
 ﻿using System;
 namespace CSharpOptions
 {
-    public abstract class Option<T>
+    public interface Option<T>
     {
-        public static Option<T> Create()
-        {
-            return new None<T>();
-        }
+        bool HasValue { get; }
 
-        public static Option<T> Create(T value)
-        {
-            if (value == null)
-                return new None<T>();
+        T Value { get; }
+    }
 
-            return new Some<T>(value);
-        }
 
-        public readonly T Value;
-
-        public readonly bool HasValue;
-
-        protected Option()
-        {
-            Value = default(T);
-            HasValue = false;
-        }
-
-        protected Option(T value)
+    struct Some<T> : Option<T>, IEquatable<Option<T>>
+    {
+        public Some(T value) : this()
         {
             Value = value;
             HasValue = true;
         }
 
-        public Option<B> FlatMap<B>(Func<T, Option<B>> func)
-        {
-            if (HasValue)
-                return func(Value);
-            return new None<B>();
-        }
+        public bool HasValue { get; private set; }
+        public T Value { get; private set; }
 
-        public Option<B> Map<B>(Func<T, B> func)
+        public bool Equals(Option<T> other)
         {
-            return FlatMap<B>(x => Option<B>.Create(func(x)));
+            return other.HasValue && other.Value.Equals(Value);
         }
+    }
 
-        public T GetOrElse(T defaultValue)
-        {
-            if (this is Some<T>)
-                return Value;
+    struct None<T> : Option<T>, IEquatable<Option<T>>
+    {
+        public bool HasValue { get { return false; } }
+        public T Value { get { throw new Exception("No value"); } }
 
-            return defaultValue;
-        }
-
-        public static implicit operator Option<T>(T value)
+        public bool Equals(Option<T> other)
         {
-            return Option<T>.Create(value);
-        }
-        
-        internal class Some<T> : Option<T>
-        {
-            public Some(T value)
-                : base(value)
-            { }
-        }
-
-        internal class None<T> : Option<T>
-        {
-            public None()
-                : base()
-            { }
+            return !other.HasValue;
         }
     }
 }
