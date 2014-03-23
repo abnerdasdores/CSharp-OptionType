@@ -1,4 +1,5 @@
-﻿using FluentAssertions;
+﻿using System.Linq;
+using FluentAssertions;
 using NUnit.Framework;
 
 namespace CSharpOptions.Testes
@@ -14,7 +15,7 @@ namespace CSharpOptions.Testes
                 Nome = "Robb Stark"
             };
 
-            var optionPessoa = Option.Create(pessoa);
+            var optionPessoa = Option.From(pessoa);
 
             var logradouro = optionPessoa
                                     .Map(p => p.Endereco)
@@ -36,7 +37,7 @@ namespace CSharpOptions.Testes
                 }
             };
 
-            var optionPessoa = Option.Create(pessoa);
+            var optionPessoa = Option.From(pessoa);
 
             var logradouro = optionPessoa
                                     .Map(p => p.Endereco)
@@ -68,6 +69,42 @@ namespace CSharpOptions.Testes
             var option = Option.From<string>(null);
 
             option.Should().Be(Option.None<string>());
+        }
+
+        [Test]
+        public void FromNonNullNullable()
+        {
+            int? value = 1;
+            var option = Option.From(value);
+
+            option.Should().Be(Option.From(1));
+        }
+
+        [Test]
+        public void NonNullNullableToOption()
+        {
+            int? value = 1;
+            var option = value.ToOption();
+
+            option.Should().Be(Option.From(1));
+        }
+
+        [Test]
+        public void FromNullNullable()
+        {
+            int? value = null;
+            var option = Option.From(value);
+
+            option.Should().Be(Option.None<int>());
+        }
+
+        [Test]
+        public void NullNullableToOption()
+        {
+            int? value = null;
+            var option = value.ToOption();
+
+            option.Should().Be(Option.None<int>());
         }
 
         [Test]
@@ -111,6 +148,36 @@ namespace CSharpOptions.Testes
                       select e.Cidade).GetOrElse("Sem endereco");
 
             res.Should().Be("Sem endereco");
+        }
+
+        [Test]
+        public void WhereOperatorWithTruePredicate()
+        {
+            var pessoa = new Pessoa
+            {
+                Nome = "Robb Stark"
+            };
+
+            var res = from p in pessoa.ToOption()
+                      where p.Nome == "Robb Stark"
+                      select p.Nome;
+
+            res.GetOrElse("").Should().Be("Robb Stark");
+        }
+
+        [Test]
+        public void WhereOperatorWithFalsePredicate()
+        {
+            var pessoa = new Pessoa
+            {
+                Nome = "Robb Stark"
+            };
+
+            var res = from p in pessoa.ToOption()
+                      where p.Nome == "Jon Snow"
+                      select p;
+
+            res.Should().Be(Option.None<Pessoa>());
         }
     }
 
